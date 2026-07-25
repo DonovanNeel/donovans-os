@@ -9,8 +9,14 @@ lazy_static! {
     pub static ref SHELL_BUFFER: Mutex<Vec<char>> = Mutex::new(Vec::new());
 }
 
+///Handles the character
+pub fn handle_char(c: char) {
+    append_char_to_buffer(c);
+    print!("{}", c);
+}
+
 /// Appends the chosen char to the shell buffer
-pub fn append_char_to_buffer(c: char) {
+fn append_char_to_buffer(c: char) {
     let mut shell_buffer = SHELL_BUFFER.lock();
     shell_buffer.push(c);
 }

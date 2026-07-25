@@ -119,10 +119,7 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
                     match character {
                         '\n' => shell::interpret_line(),
                         '\x08' => shell::handle_backspace(),
-                        _ => {
-                            shell::append_char_to_buffer(character);
-                            print!("{}", character);
-                        }
+                        _ => shell::handle_char(character),
                     }
                 },
                 DecodedKey::RawKey(_key) => {}//print!("{:?}", key),
