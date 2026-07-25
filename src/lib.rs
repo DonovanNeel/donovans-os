@@ -28,13 +28,32 @@ pub fn init() {
 //Safe loop to allow the CPU to rest when not needed
 pub fn hlt_loop() -> ! {
     loop {
+        if let Some(key) = check_for_keypress() {
+            match key {
+                DecodedKey::Unicode(character) => {
+                    match character {
+                        '\n' => shell::interpret_line(),
+                        '\x08' => shell::handle_backspace(),
+                        _ => shell::handle_char(character),
+                    }
+                },
+                DecodedKey::RawKey(_key) => {}//print!("{:?}", key),
+            }
+        }
+
         x86_64::instructions::hlt();
     }
+}
+
+fn check_for_keypress() -> Option<DecodedKey> {
+    let mut key_press = interrupts::KEYREADER.lock();
+    key_press.pop_key()
 }
 
 //Testing framework related code
 #[cfg(test)]
 use bootloader::{entry_point, BootInfo};
+use pc_keyboard::{DecodedKey};
 
 #[cfg(test)]
 entry_point!(test_kernel_main);

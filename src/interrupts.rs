@@ -1,9 +1,10 @@
+use::alloc::vec::Vec;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use crate::println;
 
 use lazy_static::lazy_static;
-
-use crate::{gdt, hlt_loop, shell};
+use pc_keyboard::DecodedKey;
+use crate::{gdt, hlt_loop};
 
 use pic8259::ChainedPics;
 use spin;
@@ -94,10 +95,40 @@ extern "x86-interrupt" fn timer_interrupt_handler(
     }
 }
 
+
+///Will fifo-queue the keys to handle in main
+pub struct KeyReader {
+    queue: Vec<DecodedKey>,
+}
+impl KeyReader {
+    ///Creates a new key reader
+    pub fn new() -> Self {
+        KeyReader { queue: Vec::new() }
+    }
+    ///Pushes a key to the queue
+    pub fn push_key(&mut self, key: DecodedKey) {
+        self.queue.push(key);
+    }
+    ///Pops a key from the queue
+    pub fn pop_key(&mut self) -> Option<DecodedKey> {
+        if self.queue.is_empty() {
+            None
+        } else {
+            Some(self.queue.remove(0))
+        }
+    }
+}
+
+//A lazy static for reading keyboard inputs
+lazy_static! {
+    pub static ref KEYREADER: spin::Mutex<KeyReader> = spin::Mutex::new(KeyReader::new());
+}
+
+
 extern "x86-interrupt" fn keyboard_interrupt_handler(
     _stack_frame: InterruptStackFrame)
 {
-    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+    use pc_keyboard::{layouts, HandleControl, Keyboard, ScancodeSet1};
     use spin::Mutex;
     use x86_64::instructions::port::Port;
 
@@ -114,16 +145,7 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
     let scancode: u8 = unsafe { port.read() };
     if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
         if let Some(key) = keyboard.process_keyevent(key_event) {
-            match key {
-                DecodedKey::Unicode(character) => {
-                    match character {
-                        '\n' => shell::interpret_line(),
-                        '\x08' => shell::handle_backspace(),
-                        _ => shell::handle_char(character),
-                    }
-                },
-                DecodedKey::RawKey(_key) => {}//print!("{:?}", key),
-            }
+            KEYREADER.lock().queue.push(key);
         }
     }
 
