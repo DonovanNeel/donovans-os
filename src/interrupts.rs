@@ -1,5 +1,5 @@
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
-use crate::{println, print};
+use crate::println;
 
 use lazy_static::lazy_static;
 
