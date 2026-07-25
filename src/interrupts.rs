@@ -125,7 +125,7 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
                         }
                     }
                 },
-                DecodedKey::RawKey(key) => {}//print!("{:?}", key),
+                DecodedKey::RawKey(_key) => {}//print!("{:?}", key),
             }
         }
     }
