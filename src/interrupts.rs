@@ -3,7 +3,7 @@ use crate::{println, print};
 
 use lazy_static::lazy_static;
 
-use crate::{gdt, hlt_loop};
+use crate::{gdt, hlt_loop, shell};
 
 use pic8259::ChainedPics;
 use spin;
@@ -115,8 +115,17 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(
     if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
         if let Some(key) = keyboard.process_keyevent(key_event) {
             match key {
-                DecodedKey::Unicode(character) => print!("{}", character),
-                DecodedKey::RawKey(key) => print!("{:?}", key),
+                DecodedKey::Unicode(character) => {
+                    match character {
+                        '\n' => shell::interpret_line(),
+                        '\x08' => shell::handle_backspace(),
+                        _ => {
+                            shell::append_char_to_buffer(character);
+                            print!("{}", character);
+                        }
+                    }
+                },
+                DecodedKey::RawKey(key) => {}//print!("{:?}", key),
             }
         }
     }
