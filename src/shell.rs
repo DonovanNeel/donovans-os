@@ -57,6 +57,8 @@ pub fn handle_down() {
     let mut cc_down = COMMAND_CACHE_DOWN.lock();
     let mut cc_up = COMMAND_CACHE_UP.lock();
 
+
+    ///Will handle this and other warnings later
     if let Some(command) = cc_down.pop_line() {
         cc_up.push_line(&shell_buffer);
         let length_of_current_buffer = shell_buffer.len();
