@@ -14,6 +14,7 @@ pub mod gdt;
 pub mod memory;
 pub mod allocator;
 mod shell;
+mod vfs;
 
 use core::panic::PanicInfo;
 
@@ -37,7 +38,13 @@ pub fn hlt_loop() -> ! {
                         _ => shell::handle_char(character),
                     }
                 },
-                DecodedKey::RawKey(_key) => {}//print!("{:?}", key),
+                DecodedKey::RawKey(key) => {
+                    match key {
+                        KeyCode::ArrowUp => shell::handle_up(),
+                        KeyCode::ArrowDown => shell::handle_down(),
+                        _ => shell::handle_other_raw_key(key),
+                    }
+                }//print!("{:?}", key),
             }
         }
 
@@ -53,7 +60,7 @@ fn check_for_keypress() -> Option<DecodedKey> {
 //Testing framework related code
 #[cfg(test)]
 use bootloader::{entry_point, BootInfo};
-use pc_keyboard::{DecodedKey};
+use pc_keyboard::{DecodedKey, KeyCode};
 
 #[cfg(test)]
 entry_point!(test_kernel_main);
